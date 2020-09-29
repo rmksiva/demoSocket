@@ -43,12 +43,27 @@ class ProductListAsync extends Component
           );
     } 
 
-   async componentDidMount()
+    async componentDidMount()
     {
+        
+       
     await User.login('siva', '1234').then(res=> console.log("Login Suceess",res), err => console.log("err",err) );
+    const activeUser = User.getActiveUser();
+    activeUser.registerForLiveService()
+    .then(() => {
+        console.log("Live service is activated");
+    })
+    .catch(err => {
+        console.log("Live service error");
+    });
     const collection = DataStore.collection('Inventory', DataStoreType.Network);
-    const items = await collection.find().toPromise();
-    console.log("Items",items);
+    const items = await collection.find();
+    items.subscribe((data)=>{
+        console.log("data retrived",data)
+    },
+    (err)=>console.log("Error",err),
+    ()=> console.log("Completed"));
+    //console.log("Items",items);
     this.setState({ items });
     }
 }
