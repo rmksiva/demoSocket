@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Observable } from 'rxjs';
 import { SafeAreaView, View, FlatList, StyleSheet, Text, StatusBar } from 'react-native';
-import { DataStore, DataStoreType, User, Query, DataStoreService } from 'kinvey-react-native-sdk';
+import { DataStore, DataStoreType, User, Query } from 'kinvey-react-native-sdk';
 
 const Item = ({ title }) => (
   <View style={styles.item}>
@@ -26,73 +26,59 @@ class ProductListAsync extends Component {
         if (i > 15) subscriber.complete();
       }, 3000);
     });
-    const collection = DataStore.collection('Products', DataStoreType.Network);
-    const stream = collection.find()
+
     User.login('siva', '1234').then(res => {
       console.log("Login Suceess", res);
       const activeUser = User.getActiveUser();
       activeUser.unregisterFromLiveService().then(() => console.log("UnRegister")).catch(err => console.log("unregister error", err));
-      activeUser.registerForLiveService()
+      const collection = DataStore.collection('Products', DataStoreType.Network);
+      var finalRes = activeUser.registerForLiveService()
         .then(async (res) => {
           console.log("Live service is activated");
+          this.getCollectionData();
+          var a1 = collection.subscribe({
+            onMessage: (m) => {
+              console.log("on Message", m);
+              this.getCollectionData();
 
-          //stream.unsubscribe(data => console.log("stream unsubscribed", data));
-          // var resData = await collection.subscribe({
-          //   "onMessage": (data) => {
-          //     console.log("data retrieved", data);
-          //     this.setState({ items: data });
-          //   },
-          //   "onStatus": (data) => {
-          //     console.log("On Status ", data)
-          //   },
-          //   "onError": (error) => {
-          //     console.log("On Error ", error);
-          //   }
-          // });
-          // console.log("await data", resData);
-          // return resData;
-          // stream.subscribe(
-          //   (data) => console.log("collection sub", data)
-          // )
-          console.log(stream);
-
-          //Dummy observable for Test
-          var dummydata = testObs.subscribe({
-            next: event => {
-              console.log('data', event);
-              return event;
             },
-            error: err => console.log(`Oops... ${err}`),
-            complete: () => console.log('Test Complete!')
-          });
-          console.log(dummydata);
-
-          var data = stream
-            .subscribe({
-              next: event => {
-                console.log('data', event);
-                this.setState({ items: event })
-                return event;
-              },
-              error: err => console.log(`Oops... ${err}`),
-              complete: () => console.log(`data Complete!`)
-            });
-          //data.next(data => console.log("on Event", data));
-          console.log(data);
-          //return data;
-
-
-
-          //.catch(err => console.log("subscribe error ", err));
-          //return this.getData(this);
+            onStatus: (s) => {
+              console.log("on status", s);
+            },
+            onError: (e) => {
+              console.log("on error", e);
+            }
+          })
         })
         .catch(err => {
           console.log("Live service error", err);
         });
 
+      console.log(finalRes);
+
     }
       , err => console.log("err", err));
 
+  }
+
+  getCollectionData = () => {
+    const collection = DataStore.collection('Products', DataStoreType.Network);
+    const stream = collection.find();
+    var data = stream
+      .subscribe({
+
+        error: err => console.log(`Oops... ${err}`),
+        complete: () => {
+          debugger
+          console.log(`data Complete!`);
+        },
+        next: (event) => {
+          debugger
+          console.log('data', event);
+          this.setState({ items: event })
+          //return event;
+        }
+      });
   }
   render() {
     const renderItem = ({ item }) => (
@@ -108,15 +94,6 @@ class ProductListAsync extends Component {
         />
       </SafeAreaView>
     );
-  }
-
-  async componentDidMount() {
-
-
-
-    //console.log(resFinal);
-    //this.getData(this);
-
   }
   getData(state) {
     var inventory_ds = DataStore.collection('userData'),
@@ -147,12 +124,12 @@ const styles = StyleSheet.create({
   },
   item: {
     backgroundColor: '#f9c2ff',
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
+    padding: 5,
+    marginVertical: 5,
+    marginHorizontal: 5,
   },
   title: {
-    fontSize: 32,
+    fontSize: 20,
   },
 });
 
